@@ -1,9 +1,9 @@
 # WebCompress — 100% Local Video Compressor & Converter
 
-[![React 19](https://img.shields.io/badge/React-19.0-blue.svg)](https://react.dev/)
-[![TypeScript 5.8](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Vite 6](https://img.shields.io/badge/Vite-6.2-646CFF.svg)](https://vitejs.dev/)
-[![Tailwind CSS 4](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC.svg)](https://tailwindcss.com/)
+[![React 19](https://img.shields.io/badge/React-19.3-blue.svg)](https://react.dev/)
+[![TypeScript 7.0](https://img.shields.io/badge/TypeScript-7.0-blue.svg)](https://www.typescriptlang.org/)
+[![Vite 8](https://img.shields.io/badge/Vite-8.3-646CFF.svg)](https://vitejs.dev/)
+[![Tailwind CSS 4](https://img.shields.io/badge/TailwindCSS-4.3-38B2AC.svg)](https://tailwindcss.com/)
 [![WebCodecs API](https://img.shields.io/badge/WebCodecs-Hardware_Accelerated-green.svg)](https://w3c.github.io/webcodecs/)
 [![FFmpeg WASM](https://img.shields.io/badge/FFmpeg-WASM_Multi--Thread-orange.svg)](https://ffmpegwasm.netlify.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -151,9 +151,9 @@ Wersja v0.2 wprowadza całkowicie zoptymalizowaną, płaską architekturę pozba
 ## Stos technologiczny
 
 - **Framework**: [React 19](https://react.dev/)
-- **Język**: [TypeScript 5.8+](https://www.typescriptlang.org/)
-- **Narzędzie budowania**: [Vite 6.2](https://vitejs.dev/)
-- **Stylowanie**: [Tailwind CSS v4](https://tailwindcss.com/) z `@tailwindcss/vite`
+- **Język**: [TypeScript 7.0+](https://www.typescriptlang.org/)
+- **Narzędzie budowania**: [Vite 8.3](https://vitejs.dev/)
+- **Stylowanie**: [Tailwind CSS v4.3](https://tailwindcss.com/) z `@tailwindcss/vite`
 - **Ikony**: [Lucide React](https://lucide.dev/)
 - **Silniki multimedialne**:
   - [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API) (`VideoDecoder`, `VideoEncoder`)
@@ -324,9 +324,9 @@ Version **v0.2** is a complete, clean rewrite combining native browser hardware 
 
 ## Tech Stack
 
-- **UI & Framework**: [React 19](https://react.dev/), [TypeScript 5.8+](https://www.typescriptlang.org/)
-- **Build System**: [Vite 6.2](https://vitejs.dev/) with `@vitejs/plugin-react`
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) via `@tailwindcss/vite`
+- **UI & Framework**: [React 19](https://react.dev/), [TypeScript 7.0+](https://www.typescriptlang.org/)
+- **Build System**: [Vite 8.3](https://vitejs.dev/) with `@vitejs/plugin-react`
+- **Styling**: [Tailwind CSS v4.3](https://tailwindcss.com/) via `@tailwindcss/vite`
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Core Processing**:
   - [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API) (`VideoDecoder`, `VideoEncoder`)
