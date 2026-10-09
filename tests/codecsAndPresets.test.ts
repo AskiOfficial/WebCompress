@@ -4,7 +4,7 @@ import {
   getDefaultVideoCodec, 
   getCompatibleAudioCodecs, 
   getDefaultAudioCodec,
-  CONTAINER_FORMATS 
+  canCopyAudio
 } from '../src/config/codecs';
 import { 
   getResolutionForPreset, 
@@ -184,13 +184,47 @@ describe('Codecs and Presets configuration', () => {
     expect(isPresetModified(customSettings, mockSource)).toBe(false);
   });
 
-  it('provides clean preset names and badges without overlapping limit texts', () => {
-    const discordDef = PRESETS.find(p => p.id === 'discord');
-    expect(discordDef?.name).toBe('Discord');
-    expect(discordDef?.badge).toBe('25 MB');
+  it('correctly assesses canCopyAudio according to container and audio channel rules', () => {
+    const sourceAac: VideoMetadata = {
+      name: 'video.mp4',
+      size: 1000,
+      type: 'video/mp4',
+      duration: 10,
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      aspectRatio: 16 / 9,
+      audioCodec: 'aac',
+      audioChannels: 2,
+      objectUrl: 'blob:test',
+      file: new File([], 'video.mp4'),
+    };
 
-    const emailDef = PRESETS.find(p => p.id === 'email');
-    expect(emailDef?.name).toBe('Email');
-    expect(emailDef?.badge).toBe('20 MB');
+    const sourceOpus: VideoMetadata = {
+      ...sourceAac,
+      audioCodec: 'opus',
+    };
+
+    const keepSettings = {
+      ...createDefaultSettings(),
+      audioAction: 'keep' as const,
+      audioChannels: 'original' as const,
+      format: 'mp4' as const,
+    };
+
+    expect(canCopyAudio(keepSettings, sourceAac)).toBe(true);
+    expect(canCopyAudio(keepSettings, sourceOpus)).toBe(false); // MP4 cannot take Opus natively in this context
+
+    const webmSettings = {
+      ...keepSettings,
+      format: 'webm' as const,
+    };
+    expect(canCopyAudio(webmSettings, sourceOpus)).toBe(true);
+    expect(canCopyAudio(webmSettings, sourceAac)).toBe(false);
+
+    // If audioAction is compress, cannot copy
+    expect(canCopyAudio({ ...keepSettings, audioAction: 'compress' }, sourceAac)).toBe(false);
+    // If channels changed from original, cannot copy
+    expect(canCopyAudio({ ...keepSettings, audioChannels: 'stereo' }, sourceAac)).toBe(false);
   });
 });

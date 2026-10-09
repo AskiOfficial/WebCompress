@@ -53,7 +53,7 @@ export const PRESETS: PresetDefinition[] = [
   },
 ];
 
-// Per user requirement: "domyślnie dla każdego profilu original resolution i framerate"
+// HandBrake pattern: Default to original resolution and FPS for every preset
 export function getResolutionForPreset(_preset: CompressionPreset, _source?: VideoMetadata): ResolutionOption {
   return 'original';
 }

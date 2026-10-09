@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { ConversionSettings, VideoMetadata } from '../../types';
-import { calculateBitratesAndEstimates } from '../../utils/bitrateCalc';
+import { calculateBitratesAndEstimates } from '../../services/media/bitrateCalc';
 import { formatBytes } from '../../utils/formatters';
 import { TrendingDown, Sparkles } from 'lucide-react';
 

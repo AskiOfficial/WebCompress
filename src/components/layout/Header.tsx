@@ -1,4 +1,4 @@
-import { useState, FC } from 'react';
+import { useState, type FC } from 'react';
 import { ShieldCheck, Cpu, Film } from 'lucide-react';
 import { BrowserCapabilities } from '../../types';
 import { SystemSupportModal } from '../system/SystemSupportModal';

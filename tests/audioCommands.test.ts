@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultSettings } from '../src/config/presets';
-import { buildAudioArgs, buildFinalizeArgs } from '../src/services/ffmpeg/audioCommands';
+import { buildAudioArgs, buildFinalizeArgs } from '../src/services/ffmpeg/ffmpegCommands';
 import { VideoMetadata } from '../src/types';
 
 describe('audio and browser-encoded video assembly', () => {

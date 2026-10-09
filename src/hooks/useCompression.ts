@@ -6,8 +6,8 @@ import {
   ProcessingStage, 
   VideoMetadata 
 } from '../types';
-import { mediaEngine } from '../services/mediaEngine';
-import { MediaProcessingError } from '../services/mediaError';
+import { mediaEngine } from '../services/media/mediaDispatcher';
+import { MediaProcessingError } from '../services/media/mediaError';
 
 export function useCompression() {
   const [stage, setStage] = useState<ProcessingStage>('idle');

@@ -92,6 +92,8 @@ export interface ProcessingProgress {
   estimatedRemainingMs?: number;
   fps?: number;
   speed?: string;
+  /** Encoding worker count reported by the encoder, excluding control threads. */
+  encoderThreads?: number;
   processedSeconds?: number;
   totalSeconds?: number;
   activeEngine: ActiveEngine;

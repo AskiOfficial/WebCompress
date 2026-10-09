@@ -4,9 +4,9 @@ import {
   parseMp4Boxes, 
   parseEbmlMetadata, 
   parseAviMetadata 
-} from '../src/utils/mediaProbe';
+} from '../src/services/media/mediaProbe';
 import { formatFps } from '../src/utils/formatters';
-import { getTargetFps } from '../src/utils/bitrateCalc';
+import { getTargetFps } from '../src/services/media/bitrateCalc';
 import { ConversionSettings, VideoMetadata } from '../src/types';
 import { createDefaultSettings } from '../src/config/presets';
 

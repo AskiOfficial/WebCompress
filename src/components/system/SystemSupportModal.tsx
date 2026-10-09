@@ -32,7 +32,7 @@ export const SystemSupportModal: FC<SystemSupportModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -125,7 +125,7 @@ export const SystemSupportModal: FC<SystemSupportModalProps> = ({
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl transition"
+            className="px-4 py-2 text-sm font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl transition cursor-pointer"
           >
             Close
           </button>

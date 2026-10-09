@@ -54,4 +54,3 @@ export function formatAudioChannels(channels?: number, detailed = false): string
   if (channels === 6) return detailed ? 'Original (5.1 Surround - 6 channels)' : '5.1';
   return detailed ? `Original (${channels} channels)` : `${channels} ch`;
 }
-

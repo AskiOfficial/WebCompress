@@ -4,7 +4,7 @@ import {
   getTargetDimensions, 
   getTargetFps, 
   qualityToCrf 
-} from '../src/utils/bitrateCalc';
+} from '../src/services/media/bitrateCalc';
 import { ConversionSettings, VideoMetadata } from '../src/types';
 import { createDefaultSettings } from '../src/config/presets';
 

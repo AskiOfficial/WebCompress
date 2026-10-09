@@ -16,7 +16,9 @@ import { AdvancedSettings } from './AdvancedSettings';
 import { SizeEstimator } from './SizeEstimator';
 import { SmartWarnings } from './SmartWarnings';
 import { formatFps } from '../../utils/formatters';
-import { getAutoCpuThreads } from '../../utils/capabilityDetector';
+import { getEncodingThreads } from '../../services/ffmpeg/threading';
+import { useHardwareEncodingSupport } from '../../hooks/useHardwareEncodingSupport';
+import { encodingConfigurationLabel } from '../../services/webcodecs/hardwareSupport';
 import { Zap, Cpu, Sparkles, Sliders, Lock, Unlock, RotateCcw } from 'lucide-react';
 
 interface SimpleSettingsProps {
@@ -37,7 +39,11 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
   isProcessing,
 }) => {
   const detectedCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4;
-  const autoThreads = getAutoCpuThreads(detectedCores);
+  const autoThreads = getEncodingThreads(settings, capabilities?.multithreadWasm ?? true);
+  const h265CpuUnavailable = settings.videoCodec === 'h265' && capabilities !== null && !capabilities.multithreadWasm;
+  const hardwareSupport = useHardwareEncodingSupport(settings, source);
+  const configurationLabel = encodingConfigurationLabel(settings, source);
+  const hardwareBlocked = settings.processingMode === 'hardware' && !hardwareSupport?.supported;
 
   const isHardwareAvailableForCodec = (codec: VideoCodec, format: OutputFormat = settings.format): boolean => {
     if (!capabilities?.webCodecs || !capabilities?.videoEncoder) return false;
@@ -536,7 +542,7 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
           >
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-xs font-bold">Auto ({detectedCores} cores)</span>
+              <span className="text-xs font-bold">Auto</span>
             </div>
             <span className="text-[10px] text-slate-400 block mt-1">
               Chooses WebCodecs or CPU before encoding starts
@@ -545,17 +551,20 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
 
           {/* Hardware */}
           {(() => {
-            const hwSupported = isHardwareAvailableForCodec(settings.videoCodec, settings.format);
-            const isDisabled = capabilities !== null && !hwSupported;
+            const isDisabled = !hardwareSupport?.supported;
 
             return (
               <button
                 type="button"
                 disabled={isDisabled}
+                aria-label="Hardware processing mode"
+                aria-pressed={settings.processingMode === 'hardware'}
+                aria-describedby={hardwareSupport && !hardwareSupport.supported ? 'hardware-support-message' : undefined}
                 onClick={() => !isDisabled && handleProcessingModeChange('hardware')}
                 title={
                   isDisabled
-                    ? `Hardware encoding for ${settings.videoCodec.toUpperCase()} is not available in this container/browser. Auto mode or CPU mode is recommended.`
+                    ? hardwareSupport === null ? 'Checking the selected encoder configuration...'
+                      : `Hardware encoding is unavailable for ${configurationLabel}. Choose Auto/CPU or a supported resolution.`
                     : 'WebCodecs preferred (accelerated if supported)'
                 }
                 className={`p-3 rounded-xl border text-left transition ${
@@ -573,13 +582,14 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
                   </div>
                   {isDisabled && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-medium">
-                      Unavailable
+                      {hardwareSupport === null ? 'Checking...' : 'Unavailable'}
                     </span>
                   )}
                 </div>
                 <span className="text-[10px] text-slate-400 block mt-1">
                   {isDisabled
-                    ? `No hardware encoder for ${settings.videoCodec.toUpperCase()} in browser`
+                    ? hardwareSupport === null ? 'Checking resolution, FPS and bitrate...'
+                      : `Unavailable for ${configurationLabel}`
                     : 'WebCodecs preferred (accelerated if supported)'}
                 </span>
               </button>
@@ -590,7 +600,8 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
           <button
             type="button"
             onClick={() => handleProcessingModeChange('cpu')}
-            className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+            disabled={h265CpuUnavailable}
+            className={`p-3 rounded-xl border text-left transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
               settings.processingMode === 'cpu'
                 ? 'bg-indigo-600/20 border-indigo-500 text-white'
                 : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -598,13 +609,33 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
           >
             <div className="flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-xs font-bold">CPU ({autoThreads} threads)</span>
+              <span className="text-xs font-bold">{h265CpuUnavailable ? 'CPU unavailable' : `CPU (${autoThreads} ${autoThreads === 1 ? 'thread' : 'threads'})`}</span>
             </div>
             <span className="text-[10px] text-slate-400 block mt-1">
-              FFmpeg.wasm multi-threaded CPU encoding
+              {h265CpuUnavailable ? 'H.265 requires browser isolation and shared memory' : 'FFmpeg.wasm local CPU encoding'}
             </span>
           </button>
         </div>
+        {hardwareSupport && !hardwareSupport.supported && settings.processingMode !== 'cpu' && (
+          <div id="hardware-support-message" className="mt-3 p-3 rounded-xl border border-amber-500/25 bg-amber-500/10 text-xs text-amber-200 space-y-2" role="status">
+            <p>Your browser does not expose hardware-preferred encoding for {configurationLabel}. Choose Auto or CPU to keep these settings, or change to a supported resolution.</p>
+            {settings.videoCodec !== 'h265' && getCompatibleVideoCodecs(settings.format).includes('h265') && capabilities?.h265Hardware && (
+              <button
+                type="button"
+                className="underline font-semibold cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 block text-amber-300 hover:text-amber-100"
+                onClick={() => onChange({ ...settings, videoCodec: 'h265', processingMode: 'hardware' })}
+              >
+                Use H.265 / HEVC with Hardware (preserves full resolution & framerate)
+              </button>
+            )}
+            {hardwareSupport.suggestion && (
+              <button type="button" className="underline font-semibold cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4"
+                onClick={() => onChange({ ...settings, resolution: hardwareSupport.suggestion!.resolution, processingMode: 'hardware' })}>
+                Use {hardwareSupport.suggestion.resolution} ({hardwareSupport.suggestion.width}×{hardwareSupport.suggestion.height}) with Hardware
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Advanced Settings Accordion */}
@@ -627,7 +658,7 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
       {/* Primary Action Button */}
       <button
         type="button"
-        disabled={isProcessing}
+        disabled={isProcessing || hardwareBlocked || (h265CpuUnavailable && settings.processingMode === 'cpu')}
         onClick={onCompress}
         className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition shadow-xl shadow-indigo-600/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
       >

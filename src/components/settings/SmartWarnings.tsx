@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { BrowserCapabilities, ConversionSettings, VideoMetadata } from '../../types';
-import { calculateBitratesAndEstimates, getTargetDimensions, getTargetFps } from '../../utils/bitrateCalc';
+import { calculateBitratesAndEstimates, getTargetDimensions, getTargetFps } from '../../services/media/bitrateCalc';
 import { formatFps } from '../../utils/formatters';
 import { AlertTriangle, Info } from 'lucide-react';
 
@@ -96,35 +96,28 @@ export const SmartWarnings: FC<SmartWarningsProps> = ({
     }
   }
 
-  // 7. H.265 CPU single-thread warning
-  if (settings.videoCodec === 'h265' && (!capabilities?.h265Hardware || settings.processingMode === 'cpu')) {
-    warnings.push({
-      id: 'h265-cpu-single-thread',
-      type: 'warning',
-      text: 'H.265 in CPU mode runs on 1 thread in WebAssembly to prevent browser deadlocks. For 1080p/1440p 60 FPS video, encoding will be very slow (0.02x–0.05x). Switch to H.264 or VP9 to utilize all CPU threads or hardware acceleration.',
-    });
-  }
-
-  // 8. 1 Thread warning
-  if (settings.cpuThreads === 1 && settings.videoCodec !== 'h265') {
+  // 7. Explicit single-thread selection applies to all CPU codecs.
+  if (settings.cpuThreads === 1 && settings.processingMode !== 'hardware') {
     warnings.push({
       id: 'one-thread-warning',
       type: 'warning',
-      text: 'CPU threads is explicitly set to 1. Single-threaded WASM encoding is very slow and may cause the browser tab to hang. Auto threads is strongly recommended.',
+      text: 'CPU threads is explicitly set to 1. Single-threaded WASM encoding is very slow for high-resolution video. Auto threads is recommended.',
     });
   }
 
   // 8. Single thread fallback notice if isolation is inactive
   if (
-    settings.processingMode === 'cpu' &&
-    settings.cpuThreads !== 1 &&
+    settings.processingMode !== 'hardware' &&
+    (settings.cpuThreads !== 1 || settings.videoCodec === 'h265') &&
     capabilities &&
     !capabilities.multithreadWasm
   ) {
     warnings.push({
       id: 'single-thread',
-      type: 'info',
-      text: 'Browser cross-origin isolation is not active for SharedArrayBuffer; FFmpeg will process using single-thread mode.',
+      type: settings.videoCodec === 'h265' ? 'warning' : 'info',
+      text: settings.videoCodec === 'h265'
+        ? 'H.265 CPU encoding requires browser isolation and shared memory. Select H.264 or VP9, or use a supported browser encoder.'
+        : 'Shared memory or browser isolation is unavailable; CPU encoding will use the single-thread engine.',
     });
   }
 

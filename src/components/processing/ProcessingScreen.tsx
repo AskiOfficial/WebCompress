@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { ConversionSettings, ProcessingProgress, VideoMetadata } from '../../types';
 import { formatDuration, formatFps } from '../../utils/formatters';
-import { getTargetDimensions, getTargetFps } from '../../utils/bitrateCalc';
+import { getTargetDimensions, getTargetFps } from '../../services/media/bitrateCalc';
 import { Loader2, XCircle, Zap, Cpu } from 'lucide-react';
 
 interface ProcessingScreenProps {
@@ -28,6 +28,11 @@ export const ProcessingScreen: FC<ProcessingScreenProps> = ({
   const codecName = settings.videoCodec.toUpperCase();
 
   const isHardware = progress?.hardwareAccelerated || progress?.activeEngine === 'webcodecs';
+  const cpuLabel = progress?.stage === 'initializing' || !progress
+    ? 'Preparing CPU engine'
+    : settings.videoCodec === 'h265' && progress.encoderThreads !== undefined
+    ? `CPU · x265: ${progress.encoderThreads} ${progress.encoderThreads === 1 ? 'encoding thread' : 'worker threads'}`
+    : progress.activeEngine === 'ffmpeg-mt' ? 'CPU Multi-Thread' : 'CPU Single-Thread';
 
   return (
     <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl max-w-2xl mx-auto my-8 space-y-6 text-center animate-in fade-in duration-200">
@@ -81,24 +86,11 @@ export const ProcessingScreen: FC<ProcessingScreenProps> = ({
           <span className="flex items-center gap-1 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 font-medium">
             <Cpu className="w-3.5 h-3.5 text-indigo-400" />
             <span>
-              {settings.videoCodec === 'h265'
-                ? 'CPU (Single-Thread x265)'
-                : progress?.activeEngine === 'ffmpeg-mt'
-                ? 'CPU Multi-Thread'
-                : 'CPU Single-Thread'}
+              {cpuLabel}
             </span>
           </span>
         )}
       </div>
-
-      {settings.videoCodec === 'h265' && !isHardware && (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs text-left leading-relaxed">
-          <p className="font-semibold mb-0.5">Why is H.265 encoding running on 1 thread?</p>
-          <p className="text-[11px] text-amber-200/80">
-            In WebAssembly, multi-threaded libx265 causes thread-deadlocks on worker termination. To ensure stable conversion without crashing, H.265 CPU encoding is restricted to a single thread. For 10x–20x faster encoding utilizing all CPU threads or hardware acceleration, switch to <span className="font-bold underline">H.264</span>.
-          </p>
-        </div>
-      )}
 
       {/* Processing Statistics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left pt-2">

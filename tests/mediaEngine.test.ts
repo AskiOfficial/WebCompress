@@ -9,7 +9,7 @@ vi.mock('../src/services/webcodecs/webcodecsEngine', () => ({ WebCodecsEngine: c
 vi.mock('../src/services/ffmpeg/ffmpegEngine', () => ({ FFmpegEngine: class {
   process = engines.cpu; cancel = engines.cancel;
 } }));
-import { MediaEngineDispatcher } from '../src/services/mediaEngine';
+import { MediaEngineDispatcher } from '../src/services/media/mediaDispatcher';
 
 const source = {} as VideoMetadata;
 const file = new File([], 'source.mp4');

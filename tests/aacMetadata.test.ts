@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readAacChannels, readAacEsds } from '../src/utils/aacMetadata';
-import { parseMp4Boxes } from '../src/utils/mediaProbe';
+import { readAacChannels, readAacEsds } from '../src/services/media/aacMetadata';
+import { parseMp4Boxes } from '../src/services/media/mediaProbe';
 
 function descriptor(tag: number, payload: Uint8Array) { return Buffer.concat([Buffer.from([tag, payload.length]), payload]); }
 function esds(channels: number) {

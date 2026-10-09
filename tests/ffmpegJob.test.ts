@@ -19,6 +19,21 @@ const events = { onProgress: vi.fn(), onStage: vi.fn() };
 afterEach(() => vi.unstubAllGlobals());
 
 describe('local media worker lifecycle', () => {
+  it('sends actual encoder threads to the UI before the first frame and preserves them during progress', async () => {
+    vi.stubGlobal('Worker', TestWorker);
+    const onProgress = vi.fn();
+    const result = new FFmpegJob().run({ ...request, stage: 'encoding' }, { ...events, onProgress });
+    TestWorker.last.reply({ type: 'engine_ready', engine: 'ffmpeg-mt' });
+    TestWorker.last.reply({ type: 'stats', encoderThreads: 4 });
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({ activeEngine: 'ffmpeg-mt', encoderThreads: 4, percent: 0 }));
+    TestWorker.last.reply({ type: 'progress', percent: 25, elapsedMs: 1000, processedSeconds: 1.25 });
+    TestWorker.last.reply({ type: 'stats', fps: 12, speed: '0.4x' });
+    TestWorker.last.reply({ type: 'progress', percent: 50, elapsedMs: 2000, processedSeconds: 2.5 });
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({ encoderThreads: 4, percent: 50, processedSeconds: 2.5, fps: 12 }));
+    TestWorker.last.reply({ type: 'completed', outputBuffer: new ArrayBuffer(1), engineUsed: 'ffmpeg-mt' });
+    await result;
+  });
+
   it('cancel rejects the pending job and terminates the worker immediately', async () => {
     vi.stubGlobal('Worker', TestWorker);
     const job = new FFmpegJob();
@@ -33,6 +48,14 @@ describe('local media worker lifecycle', () => {
     const result = new FFmpegJob().run(request, events);
     TestWorker.last.reply({ type: 'error', message: 'Audio decode failed' });
     await expect(result).rejects.toThrow('Audio decode failed');
+    expect(TestWorker.last.terminate).toHaveBeenCalledOnce();
+  });
+
+  it('preserves an actionable encoder limitation as the primary user error', async () => {
+    vi.stubGlobal('Worker', TestWorker);
+    const result = new FFmpegJob().run(request, events);
+    TestWorker.last.reply({ type: 'error', message: 'Shared memory initialization failed', userMessage: 'Select H.264 or VP9.' });
+    await expect(result).rejects.toMatchObject({ message: 'Select H.264 or VP9.', technicalDetails: 'Shared memory initialization failed' });
     expect(TestWorker.last.terminate).toHaveBeenCalledOnce();
   });
 

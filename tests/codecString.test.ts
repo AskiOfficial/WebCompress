@@ -12,7 +12,6 @@ describe('WebCodecs codec string resolution', () => {
       const candidates = getCodecCandidateStrings('h265', 1920, 1080, 30);
       expect(candidates[0]).toBe('hvc1.1.6.L120.B0');
       expect(candidates).toContain('hvc1.1.6.L123.B0');
-      // Should not put Level 3.1 as a candidate because 1080p exceeds Level 3.1
       expect(candidates).not.toContain('hvc1.1.6.L93.B0');
     });
 
@@ -31,6 +30,15 @@ describe('WebCodecs codec string resolution', () => {
     it('selects Level 5.1 for 4K @ 60fps', () => {
       const candidates = getCodecCandidateStrings('h265', 3840, 2160, 60);
       expect(candidates[0]).toBe('hvc1.1.6.L153.B0');
+    });
+
+    it('selects Level 5.0 and includes Level 5.1 for 1920x1440 @ 60fps', () => {
+      const candidates = getCodecCandidateStrings('h265', 1920, 1440, 60);
+      expect(candidates[0]).toBe('hvc1.1.6.L150.B0');
+      expect(candidates).toContain('hvc1.1.6.L150.90');
+      expect(candidates).toContain('hev1.1.6.L150.90');
+      expect(candidates).toContain('hvc1.1.6.L153.B0');
+      expect(candidates).toContain('hev1.1.6.L153.90');
     });
   });
 
@@ -53,6 +61,16 @@ describe('WebCodecs codec string resolution', () => {
     it('selects Level 5.1 for 4K', () => {
       const candidates = getCodecCandidateStrings('h264', 3840, 2160, 30);
       expect(candidates[0]).toBe('avc1.42E033');
+    });
+
+    it('selects Level 5.1 and includes High Profile 5.1/5.2 for 1920x1440 @ 60fps', () => {
+      const candidates = getCodecCandidateStrings('h264', 1920, 1440, 60);
+      expect(candidates[0]).toBe('avc1.42E033');
+      expect(candidates).toContain('avc1.640033');
+      expect(candidates).toContain('avc1.640034');
+      expect(candidates).toContain('avc1.640833');
+      expect(candidates).toContain('avc1.4D4033');
+      expect(candidates).toContain('avc1.4D0033');
     });
   });
 

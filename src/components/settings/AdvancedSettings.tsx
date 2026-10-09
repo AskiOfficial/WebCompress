@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, type FC } from 'react';
 import { ConversionSettings, VideoMetadata } from '../../types';
 import { ChevronDown, ChevronUp, Sliders, Volume2, Cpu, Globe } from 'lucide-react';
-import { canCopyAudio } from '../../services/ffmpeg/audioCommands';
+import { canCopyAudio } from '../../config/codecs';
 import { formatAudioChannels } from '../../utils/formatters';
-import { getAutoCpuThreads } from '../../utils/capabilityDetector';
+import { getEncodingThreads, getAutoCpuThreads, H265_MAX_CPU_THREADS } from '../../services/ffmpeg/threading';
 
 interface AdvancedSettingsProps {
   settings: ConversionSettings;
@@ -11,14 +11,16 @@ interface AdvancedSettingsProps {
   source?: VideoMetadata;
 }
 
-export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
+export const AdvancedSettings: FC<AdvancedSettingsProps> = ({
   settings,
   onChange,
   source,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const detectedCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4;
-  const autoThreads = getAutoCpuThreads(detectedCores);
+  const autoThreads = settings.videoCodec === 'h265'
+    ? getEncodingThreads({ ...settings, cpuThreads: 0 }, true)
+    : getAutoCpuThreads(detectedCores);
 
   const isFastStartSupported = settings.format === 'mp4' || settings.format === 'mov';
 
@@ -170,7 +172,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-slate-300">
+                  <label htmlFor="cpu-threads" className="text-xs font-medium text-slate-300">
                     CPU Threads (FFmpeg WASM)
                   </label>
                   <span className="text-[11px] text-slate-400">
@@ -178,6 +180,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   </span>
                 </div>
                 <select
+                  id="cpu-threads"
                   value={settings.cpuThreads}
                   onChange={(e) => onChange({ cpuThreads: Number(e.target.value) })}
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
@@ -191,17 +194,17 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   <option value={8}>8 Threads</option>
                   {detectedCores >= 12 && <option value={12}>12 Threads</option>}
                   {detectedCores >= 16 && <option value={16}>16 Threads</option>}
-                  {detectedCores >= 24 && <option value={24}>24 Threads</option>}
-                  {detectedCores >= 32 && <option value={32}>32 Threads</option>}
+                  {detectedCores >= 24 && <option value={24} disabled={settings.videoCodec === 'h265'}>24 Threads{settings.videoCodec === 'h265' ? ' (H.265 limit: 16)' : ''}</option>}
+                  {detectedCores >= 32 && <option value={32} disabled={settings.videoCodec === 'h265'}>32 Threads{settings.videoCodec === 'h265' ? ' (H.265 limit: 16)' : ''}</option>}
                   <option value={1}>1 Thread (Single-core fallback - Slow)</option>
                 </select>
                 {settings.videoCodec === 'h265' ? (
                   <p className="text-[10px] text-amber-400 mt-1 leading-tight">
-                    Notice: Due to WebAssembly browser threading constraints, H.265 (libx265) runs in single-thread mode to prevent worker deadlocks. Switch to H.264 or VP9 to utilize all {autoThreads} CPU threads.
+                    H.265 uses up to {H265_MAX_CPU_THREADS} CPU worker threads when browser isolation is available. Higher selections are capped to keep WASM workers available for decoding and filters.
                   </p>
                 ) : settings.cpuThreads === 1 ? (
                   <p className="text-[10px] text-amber-400 mt-1 leading-tight">
-                    Warning: 1 thread is very slow for high-resolution video and can make the browser tab unresponsive.
+                    Warning: 1 thread is very slow for high-resolution video. Auto threads is recommended.
                   </p>
                 ) : null}
               </div>

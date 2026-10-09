@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildFFmpegArgs } from '../src/services/ffmpeg/ffmpegCommands';
 import { ConversionSettings, VideoMetadata } from '../src/types';
 import { createDefaultSettings } from '../src/config/presets';
+import { getAutoCpuThreads, H265_MAX_CPU_THREADS } from '../src/services/ffmpeg/threading';
 
 describe('FFmpeg commands builder', () => {
   const mockSource1080p: VideoMetadata = {
@@ -64,6 +65,40 @@ describe('FFmpeg commands builder', () => {
     expect(args).toContain('-x265-params');
     expect(args[args.indexOf('-x265-params') + 1]).toContain('pools=none');
   });
+
+  it.each([2, 4, 8, 16, 24, 32])('uses a bounded H.265 worker pool for %i requested CPU threads', (cpuThreads) => {
+    const args = buildFFmpegArgs({
+      inputFilename: 'input.mp4', outputFilename: 'output.mp4', isMultiThread: true,
+      settings: { ...createDefaultSettings(mockSource1080p), videoCodec: 'h265', cpuThreads },
+      source: mockSource1080p,
+    });
+    const threads = Math.min(cpuThreads, H265_MAX_CPU_THREADS);
+    expect(args[args.indexOf('-x265-params') + 1]).toBe(`pools=${threads}:frame-threads=1:wpp=1:lookahead-threads=0`);
+    // Decoder and filter pools must not exhaust the preallocated pthreads.
+    expect(args[args.indexOf('-filter_threads') + 1]).toBe('1');
+    expect(args.indexOf('-threads')).toBeLessThan(args.indexOf('-i'));
+    expect(args[args.indexOf('-threads') + 1]).toBe('1');
+    expect(args[args.lastIndexOf('-threads') + 1]).toBe(String(threads));
+  });
+
+  it('applies Auto threads to H.265 without exhausting the WASM worker pool', () => {
+    const args = buildFFmpegArgs({
+      inputFilename: 'input.mp4', outputFilename: 'output.mp4', isMultiThread: true,
+      settings: { ...createDefaultSettings(mockSource1080p), videoCodec: 'h265', cpuThreads: 0 },
+    });
+    expect(args[args.indexOf('-x265-params') + 1]).toContain(`pools=${Math.min(H265_MAX_CPU_THREADS, getAutoCpuThreads())}:`);
+  });
+
+  it.each([{ multi: false, cpuThreads: 16 }, { multi: true, cpuThreads: 1 }])(
+    'keeps H.265 single-threaded when multi=$multi and cpuThreads=$cpuThreads', ({ multi, cpuThreads }) => {
+      const args = buildFFmpegArgs({
+        inputFilename: 'input.mp4', outputFilename: 'output.mp4', isMultiThread: multi,
+        settings: { ...createDefaultSettings(mockSource1080p), videoCodec: 'h265', cpuThreads },
+      });
+      expect(args[args.indexOf('-x265-params') + 1]).toBe('pools=none:frame-threads=1:wpp=0');
+      expect(args[args.indexOf('-threads') + 1]).toBe('1');
+    },
+  );
 
   it('generates correct arguments for MOV -> MP4 conversion with fast start', () => {
     const settings: ConversionSettings = {
@@ -286,5 +321,27 @@ describe('FFmpeg commands builder', () => {
       settings: { ...createDefaultSettings(mockSource1080p), audioChannels: 'original' },
     });
     expect(argsOriginal).not.toContain('-ac');
+  });
+
+  it('handles metadata preservation and stripping flags correctly (F-18)', () => {
+    // When preserveMetadata is false (default): strips metadata (-map_metadata -1)
+    const argsStripped = buildFFmpegArgs({
+      inputFilename: 'input.mp4',
+      outputFilename: 'output.mp4',
+      settings: { ...createDefaultSettings(mockSource1080p), preserveMetadata: false },
+    });
+    const stripIdx = argsStripped.indexOf('-map_metadata');
+    expect(stripIdx).toBeGreaterThan(-1);
+    expect(argsStripped[stripIdx + 1]).toBe('-1');
+
+    // When preserveMetadata is true: preserves metadata (-map_metadata 1)
+    const argsPreserved = buildFFmpegArgs({
+      inputFilename: 'input.mp4',
+      outputFilename: 'output.mp4',
+      settings: { ...createDefaultSettings(mockSource1080p), preserveMetadata: true },
+    });
+    const presIdx = argsPreserved.indexOf('-map_metadata');
+    expect(presIdx).toBeGreaterThan(-1);
+    expect(argsPreserved[presIdx + 1]).toBe('1');
   });
 });

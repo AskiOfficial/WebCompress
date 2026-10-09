@@ -32,4 +32,42 @@ describe('browser encoder configurations', () => {
     vi.stubGlobal('AudioEncoder', undefined);
     expect(await new WebCodecsEngine().isSupported({ ...createDefaultSettings(), videoCodec: 'h265', format: 'mkv' })).toBe(true);
   });
+
+  it('resolves 1920x1440 60fps hardware accelerated configuration when encoder requires quality latencyMode', async () => {
+    const isConfigSupported = vi.fn(async (config: VideoEncoderConfig) => {
+      // Rejects realtime latency (common at 1440p/4K), accepts quality mode with prefer-hardware
+      return {
+        supported: config.hardwareAcceleration === 'prefer-hardware' && config.latencyMode === 'quality',
+      };
+    });
+    vi.stubGlobal('VideoEncoder', { isConfigSupported });
+    const config = await resolveEncoderConfig('h264', 1920, 1440, 60, 4_000_000, true);
+    expect(config).not.toBeNull();
+    expect(config).toMatchObject({
+      width: 1920,
+      height: 1440,
+      framerate: 60,
+      hardwareAcceleration: 'prefer-hardware',
+      latencyMode: 'quality',
+    });
+  });
+
+  it('resolves HEVC 1920x1440 60fps hardware accelerated configuration when vendor hevc property is not supported', async () => {
+    const isConfigSupported = vi.fn(async (config: any) => {
+      // Standard W3C WebCodecs rejects vendor extension { hevc: ... }, accepts clean config
+      return {
+        supported: config.hardwareAcceleration === 'prefer-hardware' && !config.hevc,
+      };
+    });
+    vi.stubGlobal('VideoEncoder', { isConfigSupported });
+    const config = await resolveEncoderConfig('h265', 1920, 1440, 60, 4_000_000, true);
+    expect(config).not.toBeNull();
+    expect(config).toMatchObject({
+      width: 1920,
+      height: 1440,
+      framerate: 60,
+      hardwareAcceleration: 'prefer-hardware',
+    });
+    expect((config as any).hevc).toBeUndefined();
+  });
 });

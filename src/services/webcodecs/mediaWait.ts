@@ -1,4 +1,4 @@
-import { cancelledError } from '../mediaError';
+import { cancelledError } from '../media/mediaError';
 
 export function waitWithAbort<T>(promise: Promise<T>, signal: AbortSignal, timeoutMs = 30_000): Promise<T> {
   if (signal.aborted) {
@@ -15,8 +15,12 @@ export function waitWithAbort<T>(promise: Promise<T>, signal: AbortSignal, timeo
   });
 }
 
-export function waitForVideo(video: HTMLVideoElement, event: 'loadeddata' | 'seeked', ready: () => boolean,
-  signal: AbortSignal): Promise<void> {
+export function waitForVideo(
+  video: HTMLVideoElement,
+  event: 'loadeddata' | 'seeked',
+  ready: () => boolean,
+  signal: AbortSignal
+): Promise<void> {
   if (signal.aborted) return Promise.reject(cancelledError());
   if (ready()) return Promise.resolve();
   return new Promise((resolve, reject) => {

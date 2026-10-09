@@ -11,7 +11,7 @@ import { useCapabilities } from './hooks/useCapabilities';
 import { useCompression } from './hooks/useCompression';
 import { ConversionSettings, VideoMetadata } from './types';
 import { createDefaultSettings } from './config/presets';
-import { probeVideoFile } from './utils/mediaProbe';
+import { probeVideoFile } from './services/media/mediaProbe';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {

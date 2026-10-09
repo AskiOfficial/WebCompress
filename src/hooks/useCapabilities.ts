@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserCapabilities } from '../types';
-import { detectBrowserCapabilities } from '../utils/capabilityDetector';
+import { detectBrowserCapabilities } from '../services/media/capabilityDetector';
 
 export function useCapabilities() {
   const [capabilities, setCapabilities] = useState<BrowserCapabilities | null>(null);

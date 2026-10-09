@@ -1,4 +1,4 @@
-import { AudioCodec, OutputFormat, VideoCodec } from '../types';
+import { AudioCodec, ConversionSettings, OutputFormat, VideoCodec, VideoMetadata } from '../types';
 
 export interface CodecInfo {
   id: VideoCodec;
@@ -109,4 +109,18 @@ export function getCompatibleAudioCodecs(format: OutputFormat): AudioCodec[] {
 
 export function getDefaultAudioCodec(format: OutputFormat): AudioCodec {
   return CONTAINER_FORMATS[format]?.defaultAudioCodec ?? 'aac';
+}
+
+/**
+ * Checks whether audio can be copied without re-encoding.
+ * Solves inverted architectural dependency: lives cleanly in container/codecs domain.
+ */
+export function canCopyAudio(settings: ConversionSettings, source?: VideoMetadata): boolean {
+  if (settings.audioAction !== 'keep' || settings.audioChannels !== 'original') return false;
+  const codec = source?.audioCodec?.toLowerCase();
+  if (!codec) return false;
+  if (settings.format === 'mkv') return true;
+  if (settings.format === 'webm') return codec.includes('opus') || codec.includes('vorbis');
+  if (settings.format === 'mp4' || settings.format === 'mov') return codec.includes('aac');
+  return codec.includes('mp3');
 }
