@@ -40,7 +40,7 @@ async function isServerUp(url) {
 
 if (!(await isServerUp('http://127.0.0.1:5173/'))) {
   console.log('Vite server not detected on http://127.0.0.1:5173, starting background preview/dev server...');
-  viteProcess = spawn('npx', ['vite', '--port', '5173', '--strictPort'], {
+  viteProcess = spawn('npx', ['vite', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], {
     shell: true,
     stdio: 'ignore',
   });
@@ -117,14 +117,19 @@ try {
     console.log(`\n========================================\nRunning browser test: ${page}\n========================================`);
     await call('Page.navigate', { url: `http://127.0.0.1:5173/tests/browser/${page}.html` });
 
+    let ready = false;
     for (let attempt = 0; attempt < 100; attempt++) {
       const res = await call('Runtime.evaluate', {
-        expression: '!!document.querySelector("#run")',
+        expression: 'Boolean(window.mediaChecksReady && document.querySelector("#run"))',
         returnByValue: true,
       });
-      if (res.result.value) break;
+      if (res.result.value) {
+        ready = true;
+        break;
+      }
       await pause(100);
     }
+    if (!ready) throw new Error(`Page ${page} not ready (window.mediaChecksReady was not set) - check browser console.`);
 
     await call('Runtime.evaluate', { expression: 'document.querySelector("#run").click()' });
 

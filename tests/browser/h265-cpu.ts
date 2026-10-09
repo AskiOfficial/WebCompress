@@ -10,6 +10,7 @@ import { getEncodingThreads } from '../../src/services/ffmpeg/threading';
 const log = (message: string) => { document.querySelector('#log')!.textContent += message + '\n'; };
 const assert = (condition: boolean, message: string) => { if (!condition) throw new Error(message); };
 const events = { onProgress: () => {}, onStage: (_: string, message: string) => log(message) };
+Object.assign(window, { mediaChecksReady: true });
 
 document.querySelector('#run')!.addEventListener('click', async () => {
   (document.querySelector('#run') as HTMLButtonElement).disabled = true;
