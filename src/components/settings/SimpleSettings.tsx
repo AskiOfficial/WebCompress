@@ -38,7 +38,6 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
   onCompress,
   isProcessing,
 }) => {
-  const detectedCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4;
   const autoThreads = getEncodingThreads(settings, capabilities?.multithreadWasm ?? true);
   const h265CpuUnavailable = settings.videoCodec === 'h265' && capabilities !== null && !capabilities.multithreadWasm;
   const hardwareSupport = useHardwareEncodingSupport(settings, source);
