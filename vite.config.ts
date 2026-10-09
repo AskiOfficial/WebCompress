@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
+const repoName = process.env.GITHUB_REPOSITORY ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/` : '/WebCompress/';
+const base = process.env.BASE_URL ?? (process.env.GITHUB_ACTIONS ? repoName : '/');
+
 export default defineConfig({
+  base,
   plugins: [
     tailwindcss(),
     react(),

@@ -36,6 +36,8 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          BASE_URL: '/WebCompress/'
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3

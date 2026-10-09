@@ -22,7 +22,8 @@ self.onmessage = async (event: MessageEvent<FFmpegJobRequest>) => {
       return url;
     };
     const load = async (multi: boolean) => {
-      const base = multi ? '/ffmpeg/core-mt' : '/ffmpeg/core';
+      const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+      const base = multi ? `${basePath}/ffmpeg/core-mt` : `${basePath}/ffmpeg/core`;
       await ffmpeg.load({
         coreURL: await asset(`${base}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await asset(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
