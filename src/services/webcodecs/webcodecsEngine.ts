@@ -5,6 +5,7 @@ import { FFmpegEngine, FFmpegEngineEvents } from '../ffmpeg/ffmpegEngine';
 import { cancelledError, MediaProcessingError } from '../media/mediaError';
 import { resolveEncoderConfig } from './encoderConfig';
 import type { VideoPipelineRequest, VideoPipelineResponse, PipelineStats } from './workerTypes';
+import { calculateRemainingSeconds } from '../../utils/formatters';
 
 export type WebCodecsEngineEvents = FFmpegEngineEvents;
 
@@ -70,12 +71,22 @@ export class WebCodecsEngine {
         controller.signal,
         (frames, total) => {
           const elapsedMs = performance.now() - start;
+          const percent = Math.min(99, Math.floor((frames / total) * 100));
+          const processedSeconds = Math.min(metadata.duration, frames / fps);
+          const estRemaining = calculateRemainingSeconds({
+            stage: 'encoding',
+            percent,
+            elapsedMs,
+            processedSeconds,
+            totalSeconds: metadata.duration,
+          }, metadata.duration);
           events.onProgress({
             stage: 'encoding',
-            percent: Math.min(99, Math.floor((frames / total) * 100)),
+            percent,
             elapsedMs,
+            estimatedRemainingMs: estRemaining !== undefined ? Math.round(estRemaining * 1000) : undefined,
             fps: frames / Math.max(0.001, elapsedMs / 1000),
-            processedSeconds: Math.min(metadata.duration, frames / fps),
+            processedSeconds,
             totalSeconds: metadata.duration,
             activeEngine: 'webcodecs',
             hardwareAccelerated: false,

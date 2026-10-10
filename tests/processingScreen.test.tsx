@@ -37,3 +37,43 @@ describe('H.265 processing status', () => {
     expect(html).not.toContain('CPU Single-Thread');
   });
 });
+
+describe('estimated remaining time display', () => {
+  it('shows Calculating... when initializing or no time has elapsed', () => {
+    const htmlInit = render({ ...progress, stage: 'initializing', elapsedMs: 0 });
+    expect(htmlInit).toContain('Calculating...');
+
+    const htmlEarly = render({ ...progress, elapsedMs: 200 });
+    expect(htmlEarly).toContain('Calculating...');
+  });
+
+  it('displays real estimated remaining calculation when encoding has progress', () => {
+    // 25% of 10s video processed in 1000ms -> remaining is 3s -> "00:03"
+    const html = render({ ...progress, percent: 25, elapsedMs: 1000, processedSeconds: 2.5 });
+    expect(html).not.toContain('Calculating...');
+    expect(html).toContain('00:03');
+  });
+
+  it('displays remaining calculation using percent fallback when processedSeconds is omitted', () => {
+    // 50% in 4000ms -> remaining is 4s -> "00:02" or "00:04" (4000ms = 4s)
+    const html = render({ ...progress, percent: 50, elapsedMs: 4000, processedSeconds: undefined });
+    expect(html).not.toContain('Calculating...');
+    expect(html).toContain('00:04');
+  });
+
+  it('displays 00:00 when estimatedRemainingMs is 0 or completed', () => {
+    const htmlZero = render({ ...progress, estimatedRemainingMs: 0 });
+    expect(htmlZero).not.toContain('Calculating...');
+    expect(htmlZero).toContain('00:00');
+
+    const htmlComplete = render({ ...progress, stage: 'completed', percent: 100 });
+    expect(htmlComplete).not.toContain('Calculating...');
+    expect(htmlComplete).toContain('00:00');
+  });
+
+  it('respects explicitly provided estimatedRemainingMs', () => {
+    const html = render({ ...progress, estimatedRemainingMs: 65000 });
+    expect(html).not.toContain('Calculating...');
+    expect(html).toContain('01:05');
+  });
+});

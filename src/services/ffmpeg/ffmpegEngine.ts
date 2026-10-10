@@ -3,6 +3,7 @@ import { CONTAINER_FORMATS } from '../../config/codecs';
 import { cancelledError, MediaProcessingError } from '../media/mediaError';
 import { buildFFmpegArgs, buildFinalizeArgs } from './ffmpegCommands';
 import { FFmpegJobRequest, FFmpegJobResponse } from './jobTypes';
+import { calculateRemainingSeconds } from '../../utils/formatters';
 
 export interface FFmpegEngineEvents {
   onProgress: (progress: ProcessingProgress) => void;
@@ -60,11 +61,19 @@ export class FFmpegEngine {
                 events.onProgress(lastProgress);
               }
               break;
-            case 'progress':
+            case 'progress': {
+              const estRemaining = calculateRemainingSeconds({
+                stage: request.stage,
+                percent: data.percent,
+                elapsedMs: data.elapsedMs,
+                processedSeconds: data.processedSeconds,
+                totalSeconds: request.duration,
+              }, request.duration);
               lastProgress = {
                 stage: request.stage,
                 percent: data.percent,
                 elapsedMs: data.elapsedMs,
+                estimatedRemainingMs: estRemaining !== undefined ? Math.round(estRemaining * 1000) : undefined,
                 processedSeconds: data.processedSeconds,
                 totalSeconds: request.duration,
                 activeEngine: engine,
@@ -75,6 +84,7 @@ export class FFmpegEngine {
               };
               events.onProgress(lastProgress);
               break;
+            }
             case 'completed':
               finish();
               resolve({ buffer: data.outputBuffer, engine: data.engineUsed });

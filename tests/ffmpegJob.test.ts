@@ -29,7 +29,7 @@ describe('local media worker lifecycle', () => {
     TestWorker.last.reply({ type: 'progress', percent: 25, elapsedMs: 1000, processedSeconds: 1.25 });
     TestWorker.last.reply({ type: 'stats', fps: 12, speed: '0.4x' });
     TestWorker.last.reply({ type: 'progress', percent: 50, elapsedMs: 2000, processedSeconds: 2.5 });
-    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({ encoderThreads: 4, percent: 50, processedSeconds: 2.5, fps: 12 }));
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({ encoderThreads: 4, percent: 50, processedSeconds: 2.5, fps: 12, estimatedRemainingMs: 2000 }));
     TestWorker.last.reply({ type: 'completed', outputBuffer: new ArrayBuffer(1), engineUsed: 'ffmpeg-mt' });
     await result;
   });

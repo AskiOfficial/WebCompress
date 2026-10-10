@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { ConversionSettings, ProcessingProgress, VideoMetadata } from '../../types';
-import { formatDuration, formatFps } from '../../utils/formatters';
+import { formatDuration, formatFps, calculateRemainingSeconds } from '../../utils/formatters';
 import { getTargetDimensions, getTargetFps } from '../../services/media/bitrateCalc';
 import { Loader2, XCircle, Zap, Cpu } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export const ProcessingScreen: FC<ProcessingScreenProps> = ({
 }) => {
   const percent = progress?.percent ?? 0;
   const elapsedSec = (progress?.elapsedMs ?? 0) / 1000;
-  const remainingSec = progress?.estimatedRemainingMs ? progress.estimatedRemainingMs / 1000 : undefined;
+  const remainingSec = calculateRemainingSeconds(progress, metadata.duration);
 
   const targetDim = getTargetDimensions(settings, metadata);
   const targetFps = getTargetFps(settings, metadata);

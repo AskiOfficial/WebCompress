@@ -54,3 +54,60 @@ export function formatAudioChannels(channels?: number, detailed = false): string
   if (channels === 6) return detailed ? 'Original (5.1 Surround - 6 channels)' : '5.1';
   return detailed ? `Original (${channels} channels)` : `${channels} ch`;
 }
+
+export function calculateRemainingSeconds(
+  progress: {
+    stage?: string;
+    percent?: number;
+    elapsedMs?: number;
+    estimatedRemainingMs?: number;
+    processedSeconds?: number;
+    totalSeconds?: number;
+  } | null | undefined,
+  totalDurationSeconds?: number
+): number | undefined {
+  if (!progress) return undefined;
+
+  if (progress.stage === 'completed') return 0;
+  if (progress.stage === 'idle' || progress.stage === 'initializing' || progress.stage === 'probing') {
+    return undefined;
+  }
+
+  // If estimatedRemainingMs is explicitly provided, respect it
+  if (typeof progress.estimatedRemainingMs === 'number' && !isNaN(progress.estimatedRemainingMs)) {
+    return Math.max(0, progress.estimatedRemainingMs / 1000);
+  }
+
+  const elapsedMs = progress.elapsedMs ?? 0;
+  if (elapsedMs < 500) return undefined;
+
+  const percent = progress.percent ?? 0;
+  if (percent >= 100) return 0;
+
+  const totalDuration = totalDurationSeconds ?? progress.totalSeconds;
+  const processedSec = progress.processedSeconds;
+
+  // 1. Prefer processedSeconds and totalDuration for precise ETA if available
+  if (
+    typeof totalDuration === 'number' &&
+    totalDuration > 0 &&
+    typeof processedSec === 'number' &&
+    processedSec > 0
+  ) {
+    if (processedSec >= totalDuration) return 0;
+    const remainingMedia = totalDuration - processedSec;
+    const elapsedSec = elapsedMs / 1000;
+    const rate = processedSec / elapsedSec;
+    if (rate > 0) {
+      return remainingMedia / rate;
+    }
+  }
+
+  // 2. Fall back to percent if progress > 0
+  if (percent > 0) {
+    const elapsedSec = elapsedMs / 1000;
+    return (elapsedSec / percent) * (100 - percent);
+  }
+
+  return undefined;
+}
