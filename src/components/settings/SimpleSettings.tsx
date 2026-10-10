@@ -321,6 +321,10 @@ export const SimpleSettings: FC<SimpleSettingsProps> = ({
             <option value="custom">Custom Dimensions</option>
           </select>
 
+          <p className="mt-1.5 text-[11px] text-slate-400 leading-tight">
+            Browser hardware limits: ≤1080p (up to 120 FPS), 1440p / 4K (capped at 30 FPS in GPU; use CPU for 60 FPS).
+          </p>
+
           {/* Custom dimensions if selected */}
           {settings.resolution === 'custom' && (
             <div className="mt-3 p-3 bg-slate-950/40 border border-slate-800 rounded-xl space-y-2">

@@ -114,10 +114,29 @@ export const SystemSupportModal: FC<SystemSupportModalProps> = ({
             </div>
           </div>
 
+          <div>
+            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" /> Resolution & FPS Limits
+            </h3>
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-800/80 text-xs text-slate-300 space-y-2">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-400">≤ 1080p (Full HD):</span>
+                <span className="font-medium text-emerald-400">Up to 120+ FPS (Hardware accelerated)</span>
+              </div>
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-400">1440p (2K) & 2160p (4K):</span>
+                <span className="font-medium text-amber-300">Max 30 FPS in GPU (use CPU for 60 FPS)</span>
+              </div>
+              <p className="text-[10px] text-slate-400 pt-1 leading-normal border-t border-slate-800/60">
+                Chromium browsers on Windows limit hardware encoding profiles above 1080p to 30 FPS. Higher framerates require 1080p or CPU mode.
+              </p>
+            </div>
+          </div>
+
           <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-400 leading-relaxed flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
             <p>
-              <strong>Auto</strong> selects the browser encoder when supported, otherwise CPU before encoding starts. Encoding errors stop the operation; they never switch video encoding to CPU. Hardware preference does not guarantee GPU use.
+              <strong>Auto</strong> selects the browser encoder when supported, otherwise CPU before encoding starts. Hardware encoding depends on GPU driver profiles (e.g. 1440p/4K @ 30 FPS limit). CPU mode supports all resolutions and framerates without GPU driver restrictions.
             </p>
           </div>
         </div>

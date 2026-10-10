@@ -121,6 +121,15 @@ export const SmartWarnings: FC<SmartWarningsProps> = ({
     });
   }
 
+  // 9. High-resolution high-framerate hardware cap warning
+  if ((targetDim.height >= 1440 || targetDim.width >= 2560) && targetFps > 30 && settings.processingMode !== 'cpu') {
+    warnings.push({
+      id: 'highres-fps-hw-limit',
+      type: 'warning',
+      text: '1440p and 4K hardware encoding is capped at 30 FPS by browser GPU drivers (e.g. Chromium on Windows). If hardware encoding fails, change framerate to 30 FPS, reduce resolution to 1080p, or switch to CPU mode for 60 FPS.',
+    });
+  }
+
   if (warnings.length === 0) return null;
 
   return (
